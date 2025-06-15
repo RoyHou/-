@@ -1,0 +1,1155 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>工单管理系统</title>
+    <style>
+        /* 全局样式 */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Microsoft YaHei', Arial, sans-serif;
+        }
+        
+        body {
+            background-color: #f0f2f5;
+            color: #333;
+            line-height: 1.6;
+        }
+        
+        /* 布局样式 */
+        .container {
+            display: flex;
+            min-height: 100vh;
+        }
+        
+        /* 侧边栏样式 */
+        .sidebar {
+            width: 220px;
+            background-color: #001529;
+            color: #fff;
+            padding: 20px 0;
+        }
+        
+        .sidebar-header {
+            padding: 0 20px 20px;
+            border-bottom: 1px solid #303030;
+            margin-bottom: 20px;
+        }
+        
+        .sidebar-header h2 {
+            color: #fff;
+            font-size: 18px;
+        }
+        
+        .menu {
+            list-style: none;
+        }
+        
+        .menu-item {
+            padding: 12px 20px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        
+        .menu-item:hover {
+            background-color: #1890ff;
+        }
+        
+        .menu-item.active {
+            background-color: #1890ff;
+        }
+        
+        /* 主内容区样式 */
+        .main-content {
+            flex: 1;
+            padding: 20px;
+        }
+        
+        .header {
+            background-color: #fff;
+            padding: 16px 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .header h1 {
+            font-size: 20px;
+            color: #333;
+        }
+        
+        .user-info {
+            display: flex;
+            align-items: center;
+        }
+        
+        .user-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background-color: #1890ff;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 10px;
+        }
+        
+        /* 工单管理区域 */
+        .ticket-section {
+            background-color: #fff;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+        }
+        
+        .ticket-section h2 {
+            font-size: 16px;
+            margin-bottom: 15px;
+            color: #333;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        
+        /* 表格样式 */
+        .ticket-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        .ticket-table th, .ticket-table td {
+            padding: 12px 16px;
+            text-align: left;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        
+        .ticket-table th {
+            background-color: #fafafa;
+            font-weight: 500;
+            position: relative;
+            cursor: pointer;
+        }
+        
+        .ticket-table th.sortable:hover {
+            background-color: #e6f7ff;
+        }
+        
+        .ticket-table th.sort-asc::after {
+            content: "↑";
+            margin-left: 5px;
+            color: #1890ff;
+        }
+        
+        .ticket-table th.sort-desc::after {
+            content: "↓";
+            margin-left: 5px;
+            color: #1890ff;
+        }
+        
+        .ticket-table tr:hover {
+            background-color: #fafafa;
+        }
+        
+        /* 状态标签 */
+        .status {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 12px;
+        }
+        
+        .status-pending {
+            background-color: #fff7e6;
+            color: #fa8c16;
+        }
+        
+        .status-processed {
+            background-color: #f6ffed;
+            color: #52c41a;
+        }
+        
+        /* 批量操作区域 - 修改后 */
+        .batch-actions {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+            padding: 10px 0;
+            border-bottom: 1px solid #f0f0f0;
+            gap: 15px;
+        }
+        
+        .batch-select-group {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .batch-actions select, .batch-actions button {
+            padding: 6px 12px;
+            border: 1px solid #d9d9d9;
+            border-radius: 4px;
+            background-color: #fff;
+        }
+        
+        .batch-actions button {
+            background-color: #1890ff;
+            color: #fff;
+            border-color: #1890ff;
+            cursor: pointer;
+        }
+        
+        .batch-actions button:hover {
+            background-color: #40a9ff;
+            border-color: #40a9ff;
+        }
+        
+        .batch-actions button.secondary {
+            background-color: #fff;
+            color: #666;
+            border-color: #d9d9d9;
+        }
+        
+        .batch-actions button.secondary:hover {
+            background-color: #f5f5f5;
+        }
+        
+        /* 调整复选框样式 */
+        .batch-select-group input[type="checkbox"] {
+            margin: 0;
+            width: 16px;
+            height: 16px;
+        }
+        
+        .batch-select-group label {
+            cursor: pointer;
+            user-select: none;
+        }
+        
+        /* 分页样式 */
+        .pagination {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid #f0f0f0;
+        }
+        
+        .page-info {
+            color: #666;
+        }
+        
+        .page-controls {
+            display: flex;
+            align-items: center;
+        }
+        
+        .page-btn {
+            padding: 6px 12px;
+            margin: 0 5px;
+            border: 1px solid #d9d9d9;
+            border-radius: 4px;
+            background-color: #fff;
+            cursor: pointer;
+        }
+        
+        .page-btn.active {
+            background-color: #1890ff;
+            color: #fff;
+            border-color: #1890ff;
+        }
+        
+        .page-btn:disabled {
+            cursor: not-allowed;
+            opacity: 0.6;
+        }
+        
+        /* 筛选区域 */
+        .filter-area {
+            display: flex;
+            margin-bottom: 20px;
+            gap: 10px;
+        }
+        
+        .filter-item {
+            flex: 1;
+        }
+        
+        select, input {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid #d9d9d9;
+            border-radius: 4px;
+        }
+        
+        /* 详情弹窗 */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .modal-content {
+            background-color: #fff;
+            width: 80%;
+            max-width: 800px;
+            border-radius: 4px;
+            box-shadow: 0 3px 6px rgba(0, 0, 0, 0.16);
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+        
+        .modal-header {
+            padding: 16px 24px;
+            border-bottom: 1px solid #f0f0f0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .modal-title {
+            font-size: 18px;
+            font-weight: 500;
+        }
+        
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 20px;
+            cursor: pointer;
+            color: #999;
+        }
+        
+        .modal-body {
+            padding: 24px;
+        }
+        
+        .detail-row {
+            display: flex;
+            margin-bottom: 16px;
+        }
+        
+        .detail-label {
+            width: 120px;
+            font-weight: 500;
+            color: #666;
+        }
+        
+        .detail-value {
+            flex: 1;
+        }
+        
+        /* 其他模块内容样式 */
+        .module-content {
+            background-color: #fff;
+            padding: 20px;
+            box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+            min-height: 300px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            color: #666;
+        }
+        
+        .module-content h2 {
+            margin-bottom: 20px;
+            color: #333;
+        }
+        
+        /* 操作日志样式 */
+        .log-list {
+            width: 100%;
+            list-style: none;
+        }
+        
+        .log-item {
+            padding: 12px 0;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        
+        .log-time {
+            color: #999;
+            font-size: 12px;
+            margin-right: 10px;
+        }
+        
+        .log-action {
+            font-weight: 500;
+        }
+        
+        /* 个人信息样式 */
+        .profile-card {
+            width: 100%;
+            max-width: 500px;
+            background-color: #fafafa;
+            border-radius: 4px;
+            padding: 20px;
+        }
+        
+        .profile-row {
+            display: flex;
+            margin-bottom: 15px;
+        }
+        
+        .profile-label {
+            width: 100px;
+            font-weight: 500;
+            color: #666;
+        }
+        
+        .profile-value {
+            flex: 1;
+        }
+        
+        /* 响应式调整 */
+        @media (max-width: 768px) {
+            .container {
+                flex-direction: column;
+            }
+            
+            .sidebar {
+                width: 100%;
+            }
+            
+            .filter-area {
+                flex-direction: column;
+            }
+            
+            .modal-content {
+                width: 95%;
+            }
+            
+            .batch-actions {
+                flex-wrap: wrap;
+                gap: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- 侧边栏 -->
+        <div class="sidebar">
+            <div class="sidebar-header">
+                <h2>预警管理</h2>
+            </div>
+            <ul class="menu">
+                <li class="menu-item active" data-module="emergency">突发事件</li>
+                <li class="menu-item" data-module="history">历史工单数据库</li>
+                <li class="menu-item" data-module="monitor">监控中心</li>
+                <li class="menu-item" data-module="logs">操作日志</li>
+                <li class="menu-item" data-module="profile">个人信息</li>
+                <li class="menu-item" data-module="settings">设置</li>
+            </ul>
+        </div>
+        
+        <!-- 主内容区 -->
+        <div class="main-content">
+            <div class="header">
+                <h1 id="moduleTitle">突发事件</h1>
+                <div class="user-info">
+                    <div class="user-avatar">管</div>
+                    <span>管理员</span>
+                </div>
+            </div>
+            
+            <!-- 工单管理模块 (默认显示) -->
+            <div id="emergencyModule" class="module-content" style="display: block;">
+                <div class="ticket-section">
+                    <div class="filter-area">
+                        <div class="filter-item">
+                            <select id="typeFilter">
+                                <option value="">工单类型</option>
+                                <option value="complaint">投诉</option>
+                                <option value="emergency">紧急</option>
+                                <option value="feedback">反馈</option>
+                            </select>
+                        </div>
+                        <div class="filter-item">
+                            <select id="levelFilter">
+                                <option value="">危险等级</option>
+                                <option value="1">一级</option>
+                                <option value="2">二级</option>
+                                <option value="3">三级</option>
+                            </select>
+                        </div>
+                        <div class="filter-item">
+                            <input type="text" id="searchInput" placeholder="搜索工单内容...">
+                        </div>
+                    </div>
+                    
+                    <!-- 批量操作区域 - 修改后 -->
+                    <div class="batch-actions">
+                        <div class="batch-select-group">
+                            <input type="checkbox" id="selectAll">
+                            <label for="selectAll">全选</label>
+                        </div>
+                        <button id="deselectAll" class="secondary">取消全选</button>
+                        <select id="batchAction">
+                            <option value="">批量操作</option>
+                            <option value="process">批量处理</option>
+                            <option value="delete">批量删除</option>
+                            <option value="export">批量导出</option>
+                        </select>
+                        <button id="applyBatchAction">应用</button>
+                    </div>
+                    
+                    <!-- 工单表格 -->
+                    <table class="ticket-table" id="ticketTable">
+                        <thead>
+                            <tr>
+                                <th width="40"><input type="checkbox" id="headerCheckbox"></th>
+                                <th class="sortable" data-sort="id">编号</th>
+                                <th class="sortable" data-sort="content">工单内容</th>
+                                <th class="sortable" data-sort="status">处理状态</th>
+                                <th class="sortable" data-sort="category">模型预打标准集</th>
+                                <th class="sortable" data-sort="score">打标量值度</th>
+                                <th class="sortable" data-sort="submitTime">提交时间</th>
+                                <th class="sortable" data-sort="alertTime">预警时间</th>
+                                <th width="80">操作</th>
+                            </tr>
+                        </thead>
+                        <tbody id="ticketTableBody">
+                            <!-- 表格内容将通过JavaScript动态生成 -->
+                        </tbody>
+                    </table>
+                    
+                    <!-- 分页信息 -->
+                    <div class="pagination">
+                        <div class="page-info" id="pageInfo">共 0 条记录 第 0 / 0 页</div>
+                        <div class="page-controls">
+                            <button class="page-btn" id="firstPage">首页</button>
+                            <button class="page-btn" id="prevPage">上一页</button>
+                            <div id="pageNumbers"></div>
+                            <button class="page-btn" id="nextPage">下一页</button>
+                            <button class="page-btn" id="lastPage">末页</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 历史工单数据库模块 -->
+            <div id="historyModule" class="module-content" style="display: none;">
+                <h2>历史工单数据库</h2>
+                <p>请接入数据库以查看所有历史工单</p>
+            </div>
+            
+            <!-- 监控中心模块 -->
+            <div id="monitorModule" class="module-content" style="display: none;">
+                <h2>监控中心</h2>
+                <p>请接入监控接口</p>
+            </div>
+            
+            <!-- 操作日志模块 -->
+            <div id="logsModule" class="module-content" style="display: none;">
+                <h2>操作日志</h2>
+                <ul class="log-list" id="logList">
+                    <li class="log-item">
+                        <span class="log-time">2025/06/15 16:22</span>
+                        <span class="log-action">新工单导入 (ID: 006)</span>
+                    </li>
+                    <li class="log-item">
+                        <span class="log-time">2025/06/15 16:30</span>
+                        <span class="log-action">工单 006 判断为投资欺诈 (置信度: 0.8431)</span>
+                    </li>
+                    <li class="log-item">
+                        <span class="log-time">2025/06/15 17:10</span>
+                        <span class="log-action">工单 006 触发预警</span>
+                    </li>
+                    <li class="log-item">
+                        <span class="log-time">2025/06/14 09:15</span>
+                        <span class="log-action">新工单导入 (ID: 125)</span>
+                    </li>
+                    <li class="log-item">
+                        <span class="log-time">2025/06/14 10:45</span>
+                        <span class="log-action">工单 125 判断为违规收费 (置信度: 0.8123)</span>
+                    </li>
+                    <li class="log-item">
+                        <span class="log-time">2025/06/13 10:05</span>
+                        <span class="log-action">新工单导入 (ID: 912)</span>
+                    </li>
+                    <li class="log-item">
+                        <span class="log-time">2025/06/13 10:10</span>
+                        <span class="log-action">工单 912 判断为UI问题 (置信度: 0.3210)</span>
+                    </li>
+                </ul>
+            </div>
+            
+            <!-- 个人信息模块 -->
+            <div id="profileModule" class="module-content" style="display: none;">
+                <h2>个人信息</h2>
+                <div class="profile-card">
+                    <div class="profile-row">
+                        <div class="profile-label">用户名</div>
+                        <div class="profile-value">admin</div>
+                    </div>
+                    <div class="profile-row">
+                        <div class="profile-label">姓名</div>
+                        <div class="profile-value">管理员</div>
+                    </div>
+                    <div class="profile-row">
+                        <div class="profile-label">角色</div>
+                        <div class="profile-value">系统管理员</div>
+                    </div>
+                    <div class="profile-row">
+                        <div class="profile-label">部门</div>
+                        <div class="profile-value">风险控制部</div>
+                    </div>
+                    <div class="profile-row">
+                        <div class="profile-label">邮箱</div>
+                        <div class="profile-value">admin@company.com</div>
+                    </div>
+                    <div class="profile-row">
+                        <div class="profile-label">手机</div>
+                        <div class="profile-value">138****1234</div>
+                    </div>
+                    <div class="profile-row">
+                        <div class="profile-label">最后登录</div>
+                        <div class="profile-value">2025/06/15 15:30</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 设置模块 -->
+            <div id="settingsModule" class="module-content" style="display: none;">
+                <h2>系统设置</h2>
+                <div class="profile-card">
+                    <div class="profile-row">
+                        <div class="profile-label">系统名称</div>
+                        <div class="profile-value">工单管理系统</div>
+                    </div>
+                    <div class="profile-row">
+                        <div class="profile-label">版本</div>
+                        <div class="profile-value">v2.5.0</div>
+                    </div>
+                    <div class="profile-row">
+                        <div class="profile-label">开发者</div>
+                        <div class="profile-value">公司技术部</div>
+                    </div>
+                    <div class="profile-row">
+                        <div class="profile-label">技术支持</div>
+                        <div class="profile-value">tech-support@company.com</div>
+                    </div>
+                    <div class="profile-row">
+                        <div class="profile-label">数据更新时间</div>
+                        <div class="profile-value">2025/06/15 16:00</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 详情弹窗 -->
+            <div class="modal" id="detailModal">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h3 class="modal-title">工单详情</h3>
+                        <button class="modal-close" id="closeModal">&times;</button>
+                    </div>
+                    <div class="modal-body" id="modalBody">
+                        <!-- 详情内容将通过JavaScript动态生成 -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 模拟数据
+        const mockData = [
+            { id: '006', content: '投诉人在职房...', status: 'pending', category: '投资欺诈', score: 0.8431, submitTime: '2025/06/15 16:22', alertTime: '2025/06/15 17:10', level: '3', type: 'complaint', detail: '投诉人在职房购买理财产品后无法赎回，怀疑存在欺诈行为。' },
+            { id: '760', content: '在该企业APP下...', status: 'processed', category: '逃税漏税', score: 0.9374, submitTime: '2025/05/01 8:03', alertTime: '2025/05/01 10:34', level: '2', type: 'complaint', detail: '在该企业APP下单后，发现发票金额与实际支付金额不符，怀疑存在逃税行为。' },
+            { id: '323', content: '我在安居客...', status: 'processed', category: '虚假宣传', score: 0.9674, submitTime: '2025/04/29 13:49', alertTime: '2025/04/29 14:31', level: '1', type: 'complaint', detail: '我在安居客上看到的房源信息与实际情况严重不符，存在虚假宣传嫌疑。' },
+            { id: '125', content: '平台收取高额...', status: 'pending', category: '违规收费', score: 0.8123, submitTime: '2025/06/14 09:15', alertTime: '2025/06/14 10:45', level: '2', type: 'complaint', detail: '平台收取高额手续费且未提前告知，违反相关规定。' },
+            { id: '489', content: '系统突然崩溃...', status: 'processed', category: '技术故障', score: 0.6542, submitTime: '2025/06/10 14:30', alertTime: '2025/06/10 14:35', level: '1', type: 'emergency', detail: '系统突然崩溃导致大量用户无法正常使用，已紧急修复。' },
+            { id: '752', content: '建议增加搜索...', status: 'processed', category: '功能建议', score: 0.4231, submitTime: '2025/06/05 11:20', alertTime: '2025/06/05 11:25', level: '3', type: 'feedback', detail: '建议增加搜索筛选功能，提升用户体验。' },
+            { id: '341', content: '账户异常登录...', status: 'pending', category: '安全风险', score: 0.9321, submitTime: '2025/06/12 03:45', alertTime: '2025/06/12 03:50', level: '1', type: 'emergency', detail: '检测到账户在异地异常登录，可能存在安全风险。' },
+            { id: '678', content: '支付后未收到...', status: 'processed', category: '交易纠纷', score: 0.7654, submitTime: '2025/05/28 16:10', alertTime: '2025/05/28 16:40', level: '2', type: 'complaint', detail: '支付后未收到商品，商家联系不上。' },
+            { id: '912', content: '界面显示错误...', status: 'pending', category: 'UI问题', score: 0.3210, submitTime: '2025/06/13 10:05', alertTime: '2025/06/13 10:10', level: '3', type: 'feedback', detail: '界面在某些设备上显示错误，影响使用。' },
+            { id: '234', content: '客服态度恶劣...', status: 'processed', category: '服务投诉', score: 0.8765, submitTime: '2025/05/15 13:25', alertTime: '2025/05/15 13:50', level: '2', type: 'complaint', detail: '客服态度恶劣，未能解决问题。' },
+            { id: '567', content: '数据统计不准...', status: 'pending', category: '数据问题', score: 0.5432, submitTime: '2025/06/08 09:40', alertTime: '2025/06/08 10:00', level: '3', type: 'feedback', detail: '后台数据统计不准确，影响决策。' },
+            { id: '890', content: '系统响应缓慢...', status: 'processed', category: '性能问题', score: 0.7123, submitTime: '2025/05/20 15:15', alertTime: '2025/05/20 15:30', level: '1', type: 'emergency', detail: '系统响应缓慢，影响用户体验。' }
+        ];
+
+        // 操作日志数据
+        const operationLogs = [
+            { time: '2025/06/15 16:22', action: '新工单导入 (ID: 006)' },
+            { time: '2025/06/15 16:30', action: '工单 006 判断为投资欺诈 (置信度: 0.8431)' },
+            { time: '2025/06/15 17:10', action: '工单 006 触发预警' },
+            { time: '2025/06/14 09:15', action: '新工单导入 (ID: 125)' },
+            { time: '2025/06/14 10:45', action: '工单 125 判断为违规收费 (置信度: 0.8123)' },
+            { time: '2025/06/13 10:05', action: '新工单导入 (ID: 912)' },
+            { time: '2025/06/13 10:10', action: '工单 912 判断为UI问题 (置信度: 0.3210)' },
+            { time: '2025/06/12 03:45', action: '新工单导入 (ID: 341)' },
+            { time: '2025/06/12 03:50', action: '工单 341 判断为安全风险 (置信度: 0.9321)' },
+            { time: '2025/06/10 14:30', action: '新工单导入 (ID: 489)' },
+            { time: '2025/06/10 14:35', action: '工单 489 判断为技术故障 (置信度: 0.6542)' }
+        ];
+
+        // 全局变量
+        let currentPage = 1;
+        const rowsPerPage = 5;
+        let filteredData = [...mockData];
+        let sortColumn = 'id';
+        let sortDirection = 'asc';
+        let selectedTickets = [];
+        let currentModule = 'emergency';
+
+        // DOM元素
+        const ticketTableBody = document.getElementById('ticketTableBody');
+        const pageInfo = document.getElementById('pageInfo');
+        const firstPageBtn = document.getElementById('firstPage');
+        const prevPageBtn = document.getElementById('prevPage');
+        const nextPageBtn = document.getElementById('nextPage');
+        const lastPageBtn = document.getElementById('lastPage');
+        const pageNumbers = document.getElementById('pageNumbers');
+        const searchInput = document.getElementById('searchInput');
+        const typeFilter = document.getElementById('typeFilter');
+        const levelFilter = document.getElementById('levelFilter');
+        const detailModal = document.getElementById('detailModal');
+        const closeModal = document.getElementById('closeModal');
+        const modalBody = document.getElementById('modalBody');
+        const selectAllCheckbox = document.getElementById('selectAll');
+        const headerCheckbox = document.getElementById('headerCheckbox');
+        const batchActionSelect = document.getElementById('batchAction');
+        const applyBatchActionBtn = document.getElementById('applyBatchAction');
+        const deselectAllBtn = document.getElementById('deselectAll');
+        const moduleTitle = document.getElementById('moduleTitle');
+        const menuItems = document.querySelectorAll('.menu-item');
+        const moduleContents = {
+            emergency: document.getElementById('emergencyModule'),
+            history: document.getElementById('historyModule'),
+            monitor: document.getElementById('monitorModule'),
+            logs: document.getElementById('logsModule'),
+            profile: document.getElementById('profileModule'),
+            settings: document.getElementById('settingsModule')
+        };
+
+        // 初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            // 侧边栏菜单点击效果
+            menuItems.forEach(item => {
+                item.addEventListener('click', function() {
+                    const module = this.getAttribute('data-module');
+                    switchModule(module);
+                });
+            });
+            
+            // 排序功能
+            document.querySelectorAll('.sortable').forEach(header => {
+                header.addEventListener('click', function() {
+                    const column = this.getAttribute('data-sort');
+                    if (sortColumn === column) {
+                        sortDirection = sortDirection === 'asc' ? 'desc' : 'asc';
+                    } else {
+                        sortColumn = column;
+                        sortDirection = 'asc';
+                    }
+                    
+                    // 更新排序指示器
+                    document.querySelectorAll('.sortable').forEach(h => {
+                        h.classList.remove('sort-asc', 'sort-desc');
+                    });
+                    this.classList.add(`sort-${sortDirection}`);
+                    
+                    // 重新排序和渲染
+                    sortData();
+                    filterData();
+                    renderTable();
+                    updatePagination();
+                });
+            });
+            
+            // 搜索和筛选
+            searchInput.addEventListener('input', filterData);
+            typeFilter.addEventListener('change', filterData);
+            levelFilter.addEventListener('change', filterData);
+            
+            // 分页控制
+            firstPageBtn.addEventListener('click', () => goToPage(1));
+            prevPageBtn.addEventListener('click', () => goToPage(currentPage - 1));
+            nextPageBtn.addEventListener('click', () => goToPage(currentPage + 1));
+            lastPageBtn.addEventListener('click', () => goToPage(Math.ceil(filteredData.length / rowsPerPage)));
+            
+            // 详情弹窗
+            closeModal.addEventListener('click', () => {
+                detailModal.style.display = 'none';
+            });
+            
+            // 点击弹窗外部关闭
+            detailModal.addEventListener('click', (e) => {
+                if (e.target === detailModal) {
+                    detailModal.style.display = 'none';
+                }
+            });
+            
+            // 全选功能
+            selectAllCheckbox.addEventListener('change', toggleSelectAll);
+            headerCheckbox.addEventListener('change', toggleSelectAll);
+            
+            // 取消全选
+            deselectAllBtn.addEventListener('click', deselectAll);
+            
+            // 批量操作
+            applyBatchActionBtn.addEventListener('click', applyBatchAction);
+            
+            // 初始渲染
+            sortData();
+            filterData();
+            renderTable();
+            updatePagination();
+        });
+
+        // 切换模块
+        function switchModule(module) {
+            currentModule = module;
+            
+            // 更新菜单激活状态
+            menuItems.forEach(item => {
+                item.classList.remove('active');
+                if (item.getAttribute('data-module') === module) {
+                    item.classList.add('active');
+                }
+            });
+            
+            // 更新标题
+            const moduleTitles = {
+                emergency: '突发事件',
+                history: '历史工单数据库',
+                monitor: '监控中心',
+                logs: '操作日志',
+                profile: '个人信息',
+                settings: '设置'
+            };
+            moduleTitle.textContent = moduleTitles[module];
+            
+            // 显示对应模块内容
+            Object.values(moduleContents).forEach(content => {
+                content.style.display = 'none';
+            });
+            moduleContents[module].style.display = 'block';
+        }
+
+        // 排序数据
+        function sortData() {
+            filteredData.sort((a, b) => {
+                let valueA = a[sortColumn];
+                let valueB = b[sortColumn];
+                
+                // 特殊处理数值和日期
+                if (sortColumn === 'score') {
+                    valueA = parseFloat(valueA);
+                    valueB = parseFloat(valueB);
+                } else if (sortColumn === 'submitTime' || sortColumn === 'alertTime') {
+                    valueA = new Date(valueA).getTime();
+                    valueB = new Date(valueB).getTime();
+                }
+                
+                if (valueA < valueB) {
+                    return sortDirection === 'asc' ? -1 : 1;
+                }
+                if (valueA > valueB) {
+                    return sortDirection === 'asc' ? 1 : -1;
+                }
+                return 0;
+            });
+        }
+
+        // 筛选数据
+        function filterData() {
+            const searchTerm = searchInput.value.toLowerCase();
+            const typeValue = typeFilter.value;
+            const levelValue = levelFilter.value;
+            
+            filteredData = mockData.filter(ticket => {
+                const matchesSearch = searchTerm === '' || 
+                    ticket.content.toLowerCase().includes(searchTerm) || 
+                    ticket.id.toLowerCase().includes(searchTerm) || 
+                    ticket.category.toLowerCase().includes(searchTerm);
+                
+                const matchesType = typeValue === '' || ticket.type === typeValue;
+                const matchesLevel = levelValue === '' || ticket.level === levelValue;
+                
+                return matchesSearch && matchesType && matchesLevel;
+            });
+            
+            // 重置分页
+            currentPage = 1;
+            sortData();
+            renderTable();
+            updatePagination();
+        }
+
+        // 渲染表格
+        function renderTable() {
+            const startIndex = (currentPage - 1) * rowsPerPage;
+            const endIndex = Math.min(startIndex + rowsPerPage, filteredData.length);
+            const pageData = filteredData.slice(startIndex, endIndex);
+            
+            ticketTableBody.innerHTML = '';
+            
+            pageData.forEach(ticket => {
+                const row = document.createElement('tr');
+                row.dataset.id = ticket.id;
+                
+                const isSelected = selectedTickets.includes(ticket.id);
+                
+                row.innerHTML = `
+                    <td><input type="checkbox" class="ticket-checkbox" ${isSelected ? 'checked' : ''} data-id="${ticket.id}"></td>
+                    <td>${ticket.id}</td>
+                    <td>${ticket.content}</td>
+                    <td><span class="status ${ticket.status === 'pending' ? 'status-pending' : 'status-processed'}">${ticket.status === 'pending' ? '待审核' : '已处理'}</span></td>
+                    <td>${ticket.category}</td>
+                    <td>${ticket.score}</td>
+                    <td>${ticket.submitTime}</td>
+                    <td>${ticket.alertTime}</td>
+                    <td><button class="action-btn view-detail" data-id="${ticket.id}">详情</button></td>
+                `;
+                
+                ticketTableBody.appendChild(row);
+            });
+            
+            // 添加详情按钮事件
+            document.querySelectorAll('.view-detail').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const ticketId = btn.getAttribute('data-id');
+                    showDetailModal(ticketId);
+                });
+            });
+            
+            // 添加复选框事件
+            document.querySelectorAll('.ticket-checkbox').forEach(checkbox => {
+                checkbox.addEventListener('change', (e) => {
+                    const ticketId = checkbox.getAttribute('data-id');
+                    if (checkbox.checked) {
+                        if (!selectedTickets.includes(ticketId)) {
+                            selectedTickets.push(ticketId);
+                        }
+                    } else {
+                        selectedTickets = selectedTickets.filter(id => id !== ticketId);
+                    }
+                    updateSelectAllState();
+                });
+            });
+            
+            // 添加行点击事件
+            document.querySelectorAll('#ticketTableBody tr').forEach(row => {
+                row.addEventListener('click', (e) => {
+                    if (e.target.tagName !== 'INPUT' && e.target.tagName !== 'BUTTON') {
+                        const checkbox = row.querySelector('.ticket-checkbox');
+                        checkbox.checked = !checkbox.checked;
+                        const event = new Event('change');
+                        checkbox.dispatchEvent(event);
+                    }
+                });
+            });
+        }
+
+        // 显示详情弹窗
+        function showDetailModal(ticketId) {
+            const ticket = mockData.find(t => t.id === ticketId);
+            if (!ticket) return;
+            
+            modalBody.innerHTML = `
+                <div class="detail-row">
+                    <div class="detail-label">工单编号:</div>
+                    <div class="detail-value">${ticket.id}</div>
+                </div>
+                <div class="detail-row">
+                    <div class="detail-label">工单内容:</div>
+                    <div class="detail-value">${ticket.content}</div>
+                </div>
+                <div class="detail-row">
+                    <div class="detail-label">处理状态:</div>
+                    <div class="detail-value"><span class="status ${ticket.status === 'pending' ? 'status-pending' : 'status-processed'}">${ticket.status === 'pending' ? '待审核' : '已处理'}</span></div>
+                </div>
+                <div class="detail-row">
+                    <div class="detail-label">模型预打标准集:</div>
+                    <div class="detail-value">${ticket.category}</div>
+                </div>
+                <div class="detail-row">
+                    <div class="detail-label">打标量值度:</div>
+                    <div class="detail-value">${ticket.score}</div>
+                </div>
+                <div class="detail-row">
+                    <div class="detail-label">危险等级:</div>
+                    <div class="detail-value">${'★'.repeat(parseInt(ticket.level))}</div>
+                </div>
+                <div class="detail-row">
+                    <div class="detail-label">工单类型:</div>
+                    <div class="detail-value">${getTypeName(ticket.type)}</div>
+                </div>
+                <div class="detail-row">
+                    <div class="detail-label">提交时间:</div>
+                    <div class="detail-value">${ticket.submitTime}</div>
+                </div>
+                <div class="detail-row">
+                    <div class="detail-label">预警时间:</div>
+                    <div class="detail-value">${ticket.alertTime}</div>
+                </div>
+                <div class="detail-row">
+                    <div class="detail-label">详细内容:</div>
+                    <div class="detail-value">${ticket.detail}</div>
+                </div>
+            `;
+            
+            detailModal.style.display = 'flex';
+        }
+
+        // 获取类型名称
+        function getTypeName(type) {
+            switch(type) {
+                case 'complaint': return '投诉';
+                case 'emergency': return '紧急';
+                case 'feedback': return '反馈';
+                default: return type;
+            }
+        }
+
+        // 更新分页信息
+        function updatePagination() {
+            const totalPages = Math.ceil(filteredData.length / rowsPerPage);
+            pageInfo.textContent = `共 ${filteredData.length} 条记录 第 ${currentPage} / ${totalPages} 页`;
+            
+            // 更新按钮状态
+            firstPageBtn.disabled = currentPage === 1;
+            prevPageBtn.disabled = currentPage === 1;
+            nextPageBtn.disabled = currentPage === totalPages || totalPages === 0;
+            lastPageBtn.disabled = currentPage === totalPages || totalPages === 0;
+            
+            // 生成页码按钮
+            pageNumbers.innerHTML = '';
+            const maxPagesToShow = 5;
+            let startPage = Math.max(1, currentPage - Math.floor(maxPagesToShow / 2));
+            let endPage = Math.min(totalPages, startPage + maxPagesToShow - 1);
+            
+            if (endPage - startPage + 1 < maxPagesToShow) {
+                startPage = Math.max(1, endPage - maxPagesToShow + 1);
+            }
+            
+            for (let i = startPage; i <= endPage; i++) {
+                const pageBtn = document.createElement('button');
+                pageBtn.className = `page-btn ${i === currentPage ? 'active' : ''}`;
+                pageBtn.textContent = i;
+                pageBtn.addEventListener('click', () => goToPage(i));
+                pageNumbers.appendChild(pageBtn);
+            }
+        }
+
+        // 跳转到指定页
+        function goToPage(page) {
+            const totalPages = Math.ceil(filteredData.length / rowsPerPage);
+            if (page < 1 || page > totalPages) return;
+            
+            currentPage = page;
+            renderTable();
+            updatePagination();
+        }
+
+        // 全选/取消全选
+        function toggleSelectAll() {
+            const isChecked = selectAllCheckbox.checked || headerCheckbox.checked;
+            selectAllCheckbox.checked = isChecked;
+            headerCheckbox.checked = isChecked;
+            
+            const checkboxes = document.querySelectorAll('.ticket-checkbox');
+            const startIndex = (currentPage - 1) * rowsPerPage;
+            const endIndex = Math.min(startIndex + rowsPerPage, filteredData.length);
+            const pageData = filteredData.slice(startIndex, endIndex);
+            
+            if (isChecked) {
+                pageData.forEach(ticket => {
+                    if (!selectedTickets.includes(ticket.id)) {
+                        selectedTickets.push(ticket.id);
+                    }
+                });
+            } else {
+                pageData.forEach(ticket => {
+                    selectedTickets = selectedTickets.filter(id => id !== ticket.id);
+                });
+            }
+            
+            checkboxes.forEach(checkbox => {
+                checkbox.checked = isChecked;
+            });
+        }
+
+        // 取消全选
+        function deselectAll() {
+            selectedTickets = [];
+            document.querySelectorAll('.ticket-checkbox').forEach(checkbox => {
+                checkbox.checked = false;
+            });
+            selectAllCheckbox.checked = false;
+            headerCheckbox.checked = false;
+        }
+
+        // 更新全选复选框状态
+        function updateSelectAllState() {
+            const checkboxes = document.querySelectorAll('.ticket-checkbox');
+            const allChecked = checkboxes.length > 0 && Array.from(checkboxes).every(cb => cb.checked);
+            selectAllCheckbox.checked = allChecked;
+            headerCheckbox.checked = allChecked;
+        }
+
+        // 应用批量操作
+        function applyBatchAction() {
+            const action = batchActionSelect.value;
+            if (!action || selectedTickets.length === 0) {
+                alert('请选择批量操作并至少选择一个工单');
+                return;
+            }
+            
+            switch(action) {
+                case 'process':
+                    // 模拟批量处理
+                    mockData.forEach(ticket => {
+                        if (selectedTickets.includes(ticket.id)) {
+                            ticket.status = 'processed';
+                        }
+                    });
+                    alert(`已批量处理 ${selectedTickets.length} 个工单`);
+                    break;
+                    
+                case 'delete':
+                    // 模拟批量删除
+                    if (confirm(`确定要删除 ${selectedTickets.length} 个工单吗？`)) {
+                        for (let i = mockData.length - 1; i >= 0; i--) {
+                            if (selectedTickets.includes(mockData[i].id)) {
+                                mockData.splice(i, 1);
+                            }
+                        }
+                        alert(`已删除 ${selectedTickets.length} 个工单`);
+                    }
+                    break;
+                    
+                case 'export':
+                    // 模拟批量导出
+                    alert(`已导出 ${selectedTickets.length} 个工单的数据`);
+                    break;
+            }
+            
+            // 重置选择
+            selectedTickets = [];
+            selectAllCheckbox.checked = false;
+            headerCheckbox.checked = false;
+            batchActionSelect.value = '';
+            
+            // 刷新数据
+            filterData();
+        }
+    </script>
+</body>
+</html>
